@@ -17,7 +17,7 @@ server.get('/api/users', (req, res) => {
         res.json(users)
     })
     .catch(err => {
-        res.status(500).json({ error: error, error: "The users information could not be retrieved." })
+        res.status(500).json({ error: "The users information could not be retrieved." })
     });
 });
 
@@ -28,7 +28,7 @@ server.get('/api/users/:id', (req, res) => {
         res.json(users)
     })
     .catch(err => {
-        res.status(404).json({ error: error, error: "The user with the specified ID does not exist." })
+        res.status(404).json({ error: "The user with the specified ID does not exist." })
     });
 });
 
@@ -41,31 +41,44 @@ server.post('/api/users', (req, res) => {
         res.status(201).json(users)
     })
     .catch(err => {
-        res.status(500).json({ error: error, error: "There was an error while saving the user to the database"  })
+        res.status(500).json({ error: "There was an error while saving the user to the database"  })
     });
 });
 
 server.delete('/api/users/:id', (req, res) => {
-    const usersId = req.params.id;
+    const { id } = req.params;
 
     db
-    .remove(usersId)
+    .remove(id)
     .then(deleted => {
-        res.status(404).json({ message: "The user with the specified ID does not exist." })
+        if(deleted === 0){
+            res.status(404).json({ error: "The user with the specified ID does not exist." })
+        }
+        res.status(204).json.end()
     })
     .catch(err => {
-        res.status(500).json({ error: error, error: "The user could not be removed" })
+        res.status(500).json({ error: "The user could not be removed" })
     })
 })
 
 server.put('/api/users/:id', (req, res) => {
+    const {id} = req.params;
+    const user = req.body;
+
+    if(!user.name || !user.bio) 
+        return res.status(404).json({ error: "Please provide name and bio for the user. "})
+        .end();
+
     db
-    .update(usersId)
+    .update(id, user)
     .then(user => {
-        res.status(404).res.json({ message: "The user with the specified ID does not exist." })
+        // check if exist 
+        if(!user) 
+            return res.status(404).json({ error: "The user with the specified ID doesn't exist" });
+            return res.status(200).json(user);
     })
     .catch(err => {
-        res.status(400).res.json({ error: error, errorMessage: "Please provide name and bio for the user." })
+        res.status(500).json({ errorMessage: "Please provide name and bio for the user." })
     })
 })
 
